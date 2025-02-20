@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Item List Copier</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    #itemInput {
+      padding: 8px;
+      width: 300px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-left: 5px;
+      cursor: pointer;
+      border: none;
+      background-color: #28a745;
+      color: white;
+      border-radius: 4px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border: 1px solid #ddd;
+      margin-top: 5px;
+      background-color: white;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+      cursor: pointer;
+    }
+    li:hover {
+      background-color: #e9ecef;
+    }
+    /* Styling for the clickable text */
+    .item-text {
+      flex-grow: 1;
+    }
+    /* Styling for the delete button */
+    .delete-btn {
+      padding: 4px 8px;
+      font-size: 14px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Item List Copier</h1>
+  <input id="itemInput" type="text" placeholder="Enter an item..." />
+  <button onclick="handleAddItem()">Add</button>
+  
+  <ul id="itemList"></ul>
+
+  <script>
+    // Load items from local storage on page load
+    function loadItems() {
+      const items = JSON.parse(localStorage.getItem('items')) || [];
+      items.forEach(item => addItemToDOM(item));
+    }
+
+    // Save the entire items array to local storage
+    function saveItemsToLocalStorage(items) {
+      localStorage.setItem('items', JSON.stringify(items));
+    }
+
+    // Handle adding a new item from the input
+    function handleAddItem() {
+      const input = document.getElementById('itemInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      // Create a new item object with a unique id and text
+      const item = { id: Date.now(), text: text };
+      
+      // Add item to DOM
+      addItemToDOM(item);
+      
+      // Save item to local storage
+      const items = JSON.parse(localStorage.getItem('items')) || [];
+      items.push(item);
+      saveItemsToLocalStorage(items);
+      
+      input.value = '';
+      input.focus();
+    }
+
+    // Create and add a list item element to the DOM
+    function addItemToDOM(item) {
+      const li = document.createElement('li');
+      li.setAttribute('data-id', item.id);
+      li.addEventListener('click', function() {
+        copyToClipboard(item.text);
+      });
+      
+      // Create a span for the item text (click to copy)
+      const textSpan = document.createElement('span');
+      textSpan.textContent = item.text;
+      textSpan.classList.add('item-text');
+      
+      // Create the delete button
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Delete';
+      deleteButton.classList.add('delete-btn');
+      deleteButton.addEventListener('click', function(event) {
+        // Prevent the event from triggering the copy function
+        event.stopPropagation();
+        deleteItem(item.id);
+      });
+      
+      li.appendChild(textSpan);
+      li.appendChild(deleteButton);
+      document.getElementById('itemList').appendChild(li);
+    }
+    
+    // Delete an item both from the DOM and local storage
+    function deleteItem(id) {
+      // Remove from DOM
+      const li = document.querySelector(`li[data-id='${id}']`);
+      if (li) {
+        li.remove();
+      }
+      
+      // Remove from local storage
+      let items = JSON.parse(localStorage.getItem('items')) || [];
+      items = items.filter(item => item.id !== id);
+      saveItemsToLocalStorage(items);
+    }
+    
+    // Copy provided text to the clipboard
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Failed to copy text:', err);
+      }
+      document.body.removeChild(textarea);
+    }
+    
+    // Load items when the page is ready
+    document.addEventListener('DOMContentLoaded', loadItems);
+  </script>
+</body>
+</html>
